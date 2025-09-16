@@ -1,8 +1,14 @@
 package websocket
 
+import (
+	"fmt"
+	"time"
+)
+
 type Hub struct {
+	// all connected clients
 	clients    map[*Client]bool
-	broadcast  chan []byte
+	broadcast  chan *Message
 	register   chan *Client
 	unregister chan *Client
 }
@@ -10,9 +16,9 @@ type Hub struct {
 func NewHub() *Hub {
 	return &Hub{
 		clients:    make(map[*Client]bool),
-		broadcast:  make(chan []byte),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
+		broadcast:  make(chan *Message, 256),
+		register:   make(chan *Client, 128),
+		unregister: make(chan *Client, 128),
 	}
 }
 
@@ -21,6 +27,11 @@ func (h *Hub) Run() {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
+			h.broadcast <- &Message{
+				Type:      MessageTypeSystem,
+				Content:   fmt.Sprintf("%s joined", client.username),
+				Timestamp: time.Now().Unix(),
+			}
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
@@ -35,6 +46,21 @@ func (h *Hub) Run() {
 					delete(h.clients, client)
 				}
 			}
+		}
+	}
+}
+
+func (h *Hub) broadcastUserList() {
+	users := []string{}
+	for client := range h.clients {
+		users = append(users, client.username)
+	}
+
+	for client := range h.clients {
+		client.send <- &Message{
+			Type:      MessageTypeUserList,
+			Users:     users,
+			Timestamp: time.Now().Unix(),
 		}
 	}
 }

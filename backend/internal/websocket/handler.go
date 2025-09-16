@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,14 +16,30 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func ServeWS(hub *Hub, c *gin.Context) {
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-	if err != nil {
-		return
-	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
-	hub.register <- client
+func ServeWS(hub *Hub) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		username := ctx.Query("username")
+		if username == "" {
+			ctx.JSON(400, gin.H{"error": "username required"})
+			return
+		}
 
-	go client.WriteBump()
-	go client.ReadPump()
+		conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+		if err != nil {
+			log.Printf("upgrade error: %v", err)
+			return
+		}
+
+		client := &Client{
+			hub:      hub,
+			conn:     conn,
+			send:     make(chan *Message, 256),
+			username: username,
+		}
+
+		client.hub.register <- client
+
+		go client.WriteBump()
+		go client.ReadPump()
+	}
 }
