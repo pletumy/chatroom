@@ -1,21 +1,27 @@
 interface Props {
   users: string[];
+  currentUser: string;
 }
 
-const OnlineUsers = ({ users }: Props) => {
+export default function OnlineUsers({ users, currentUser }: Props) {
   return (
-    <div className="p-4">
-      <h2 className="font-bold mb-4">Online Users</h2>
-      <ul>
-        {users.map((u, i) => (
-          <li key={i} className="mb-2 flex items-center">
-            <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-            {u}
+    <div>
+      <h2 className="font-semibold mb-3">
+        Online Users ({users.length})
+      </h2>
+      <ul className="space-y-1">
+        {users.map((u, idx) => (
+          <li
+            key={idx}
+            className={`flex items-center space-x-2 py-1 px-2 rounded ${
+              u === currentUser ? "bg-blue-100 font-bold text-blue-600" : "hover:bg-gray-200"
+            }`}
+          >
+            <span className="h-2 w-2 bg-green-500 rounded-full"></span>
+            <span>{u}</span>
           </li>
         ))}
       </ul>
     </div>
   );
-};
-
-export default OnlineUsers;
+}

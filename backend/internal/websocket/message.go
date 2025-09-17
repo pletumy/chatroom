@@ -12,6 +12,6 @@ type Message struct {
 	Type      MessageType `json:"type"`
 	Username  string      `json:"username,omitempty"`
 	Content   string      `json:"content,omitempty"`
-	Users     []string    `json:"users,omitempty"`
+	UsersList []string    `json:"usersList,omitempty"`
 	Timestamp int64       `json:"timestamp,omitempty"`
 }

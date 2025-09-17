@@ -1,7 +1,6 @@
 package websocket
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -29,13 +28,22 @@ func (h *Hub) Run() {
 			h.clients[client] = true
 			h.broadcast <- &Message{
 				Type:      MessageTypeSystem,
-				Content:   fmt.Sprintf("%s joined", client.username),
+				Username:  client.username,
+				Content:   client.username + " joined the chat",
+				UsersList: h.getUserList(),
 				Timestamp: time.Now().Unix(),
 			}
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
+
+				h.broadcast <- &Message{
+					Type:      MessageTypeSystem,
+					Username:  client.username,
+					Content:   client.username + " left the chat",
+					UsersList: h.getUserList(),
+				}
 			}
 		case message := <-h.broadcast:
 			for client := range h.clients {
@@ -50,17 +58,15 @@ func (h *Hub) Run() {
 	}
 }
 
-func (h *Hub) broadcastUserList() {
+func (h *Hub) getUserList() []string {
 	users := []string{}
+	seen := make(map[string]struct{})
 	for client := range h.clients {
+		if _, ok := seen[client.username]; ok {
+			continue
+		}
+		seen[client.username] = struct{}{}
 		users = append(users, client.username)
 	}
-
-	for client := range h.clients {
-		client.send <- &Message{
-			Type:      MessageTypeUserList,
-			Users:     users,
-			Timestamp: time.Now().Unix(),
-		}
-	}
+	return users
 }

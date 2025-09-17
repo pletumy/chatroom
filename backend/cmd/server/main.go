@@ -21,7 +21,9 @@ func main() {
 		ctx.JSON(200, gin.H{"status": "ok"})
 	})
 
-	r.GET("/ws", websocket.ServeWS(hub))
+	r.GET("/ws", func(ctx *gin.Context) {
+		websocket.ServeWS(hub, ctx.Writer, ctx.Request)
+	})
 
 	srvErr := make(chan error, 1)
 	go func() {

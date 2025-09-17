@@ -1,30 +1,20 @@
-import type { ChatMessage } from "../App";  // 👈 type-only import
-
 interface Props {
-  msg: ChatMessage;
+  sender: string;
+  content: string;
+  isMe: boolean;
 }
 
-const ChatBubble = ({ msg }: Props) => {
-  const isMe = msg.user === "me";
-
-  if (msg.type !== "chat") return null;
-
+export default function ChatBubble({ sender, content, isMe }: Props) {
   return (
-    <div className={`flex mb-2 ${isMe ? "justify-end" : "justify-start"}`}>
+    <div className={`flex ${isMe ? "justify-end" : "justify-start"} mb-2`}>
       <div
         className={`px-3 py-2 rounded-lg max-w-xs ${
           isMe ? "bg-blue-500 text-white" : "bg-gray-200 text-black"
         }`}
       >
-        {!isMe && (
-          <span className="block text-xs font-semibold text-gray-600 mb-1">
-            {msg.user}
-          </span>
-        )}
-        <span>{msg.text}</span>
+        {!isMe && <div className="text-xs font-semibold">{sender}</div>}
+        <div>{content}</div>
       </div>
     </div>
   );
-};
-
-export default ChatBubble;
+}
